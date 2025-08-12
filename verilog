@@ -1,0 +1,67 @@
+`timescale 1ns / 1ps
+
+module Wallace_multiplier_32(
+    input [31:0] a,
+    input [31:0] b,
+    output [63:0] result
+);
+
+    // Declare intermediate signals for partial products and sums
+    wire [31:0] partial_products [31:0];
+    wire [63:0] sums_stage1 [15:0];
+    wire [63:0] sums_stage2 [7:0];
+    wire [63:0] sums_stage3 [3:0];
+    wire [63:0] sums_stage4 [1:0];
+
+    // Generate partial products
+    genvar i, j;
+    generate
+        for (i = 0; i < 32; i = i + 1) begin
+            for (j = 0; j < 32; j = j + 1) begin
+                assign partial_products[i][j] = a[i] & b[j];
+            end
+        end
+    endgenerate
+
+    // Combine partial products into sums
+    assign sums_stage1[0] = {32'b0, partial_products[0][31:0]};
+    assign sums_stage1[1] = {31'b0, partial_products[1][31:0], 1'b0};
+    assign sums_stage1[2] = {30'b0, partial_products[2][31:0], 2'b0};
+    assign sums_stage1[3] = {29'b0, partial_products[3][31:0], 3'b0};
+    assign sums_stage1[4] = {28'b0, partial_products[4][31:0], 4'b0};
+    assign sums_stage1[5] = {27'b0, partial_products[5][31:0], 5'b0};
+    assign sums_stage1[6] = {26'b0, partial_products[6][31:0], 6'b0};
+    assign sums_stage1[7] = {25'b0, partial_products[7][31:0], 7'b0};
+    assign sums_stage1[8] = {24'b0, partial_products[8][31:0], 8'b0};
+    assign sums_stage1[9] = {23'b0, partial_products[9][31:0], 9'b0};
+    assign sums_stage1[10] = {22'b0, partial_products[10][31:0], 10'b0};
+    assign sums_stage1[11] = {21'b0, partial_products[11][31:0], 11'b0};
+    assign sums_stage1[12] = {20'b0, partial_products[12][31:0], 12'b0};
+    assign sums_stage1[13] = {19'b0, partial_products[13][31:0], 13'b0};
+    assign sums_stage1[14] = {18'b0, partial_products[14][31:0], 14'b0};
+    assign sums_stage1[15] = {17'b0, partial_products[15][31:0], 15'b0};
+
+    // Add sums from stage 1
+    assign sums_stage2[0] = sums_stage1[0] + sums_stage1[1];
+    assign sums_stage2[1] = sums_stage1[2] + sums_stage1[3];
+    assign sums_stage2[2] = sums_stage1[4] + sums_stage1[5];
+    assign sums_stage2[3] = sums_stage1[6] + sums_stage1[7];
+    assign sums_stage2[4] = sums_stage1[8] + sums_stage1[9];
+    assign sums_stage2[5] = sums_stage1[10] + sums_stage1[11];
+    assign sums_stage2[6] = sums_stage1[12] + sums_stage1[13];
+    assign sums_stage2[7] = sums_stage1[14] + sums_stage1[15];
+
+    // Add sums from stage 2
+    assign sums_stage3[0] = sums_stage2[0] + sums_stage2[1];
+    assign sums_stage3[1] = sums_stage2[2] + sums_stage2[3];
+    assign sums_stage3[2] = sums_stage2[4] + sums_stage2[5];
+    assign sums_stage3[3] = sums_stage2[6] + sums_stage2[7];
+
+    // Add sums from stage 3
+    assign sums_stage4[0] = sums_stage3[0] + sums_stage3[1];
+    assign sums_stage4[1] = sums_stage3[2] + sums_stage3[3];
+
+    // Final result
+    assign result = sums_stage4[0] + sums_stage4[1];
+
+endmodule
