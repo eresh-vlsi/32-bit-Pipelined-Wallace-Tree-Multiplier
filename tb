@@ -1,0 +1,71 @@
+`timescale 1ns/10ps
+
+module Wallace_multiplier_32_tb;
+
+    // Inputs
+    reg [31:0] a;
+    reg [31:0] b;
+
+    // Output
+    wire [63:0] result;
+
+    // Instantiate the multiplier module
+    Wallace_multiplier_32 uut (
+        .a(a),
+        .b(b),
+        .result(result)
+    );
+
+    // Timing Analysis Task
+    task timing_test(input [31:0] in_a, input [31:0] in_b);
+        time start_time, end_time, prop_delay;
+        reg [63:0] expected_result;
+
+        begin
+            // Apply inputs
+            a = in_a;
+            b = in_b;
+
+            // Record start time
+            start_time = $time;
+
+            // Wait for the output to stabilize
+            @(posedge result); // Wait for any change in the output
+            end_time = $time;
+
+            // Calculate propagation delay
+            prop_delay = end_time - start_time;
+            expected_result = in_a * in_b;
+
+            // Display results
+            $display("Inputs: A=%d, B=%d, Expected=%d, Observed=%d, Propagation Delay=%0d ns",
+                     in_a, in_b, expected_result, result, prop_delay);
+
+            // Validate the result
+            if (result !== expected_result) begin
+                $error("Mismatch! Expected: %d, Observed: %d", expected_result, result);
+            end
+        end
+    endtask
+
+    // Testbench logic
+    initial begin
+        $display("Starting Timing Analysis for Non-Pipelined Wallace Multiplier");
+
+        // Apply test cases
+        timing_test(32'd2, 32'd3);               // Small values
+        timing_test(32'd15, 32'd15);             // Medium values
+        timing_test(32'd12345, 32'd6789);        // Random values
+        timing_test(32'd4294967295, 32'd1);      // Maximum 'a'
+        timing_test(32'd4294967295, 32'd4294967295); // Both maximum
+
+        $display("Timing Analysis Complete");
+        $finish;
+    end
+
+    // Waveform Dump
+    initial begin
+        $dumpfile("Wallace_multiplier_32_tb.vcd");
+        $dumpvars(0, Wallace_multiplier_32_tb);
+    end
+endmodule
